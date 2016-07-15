@@ -1,6 +1,6 @@
 ############################################################################
-# toolchan-ios-x86_64.cmake
-# Copyright (C) 2015  Belledonne Communications, Grenoble France
+# androidsupport.cmake
+# Copyright (C) 2016  Belledonne Communications, Grenoble France
 #
 ############################################################################
 #
@@ -20,10 +20,4 @@
 #
 ############################################################################
 
-set(CMAKE_SYSTEM_PROCESSOR "x86_64")
-set(LINPHONE_BUILDER_OSX_ARCHITECTURES "x86_64")
-set(COMPILER_PREFIX "x86_64-apple-darwin")
-set(PLATFORM "Simulator")
-include("${CMAKE_CURRENT_LIST_DIR}/ios/toolchain-ios.cmake")
-
-
+set(EP_androidsupport_EXTERNAL_SOURCE_PATHS "externals/build/support")

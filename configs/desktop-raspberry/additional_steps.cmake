@@ -1,6 +1,6 @@
 ############################################################################
-# bcg729.cmake
-# Copyright (C) 2014  Belledonne Communications, Grenoble France
+# additional_steps.cmake
+# Copyright (C) 2016  Belledonne Communications, Grenoble France
 #
 ############################################################################
 #
@@ -20,11 +20,26 @@
 #
 ############################################################################
 
-set(EP_bcg729_GIT_REPOSITORY "git://git.linphone.org/bcg729.git" CACHE STRING "bcg729 repository URL")
-set(EP_bcg729_GIT_TAG_LATEST "master" CACHE STRING "bcg729 tag to use when compiling latest version")
-set(EP_bcg729_GIT_TAG "1.0.1" CACHE STRING "bcg729 tag to use")
-set(EP_bcg729_EXTERNAL_SOURCE_PATHS "bcg729")
-set(EP_bcg729_GROUPABLE YES)
+# Packaging
+if(ENABLE_PACKAGING)
+	get_cmake_property(_varnames VARIABLES)
+	set(ENABLE_VARIABLES )
+	foreach(_varname ${_varnames})
+		if(_varname MATCHES "^ENABLE_.*")
+			list(APPEND ENABLE_VARIABLES -D${_varname}=${${_varname}})
+	    endif()
+	endforeach()
 
-set(EP_bcg729_LINKING_TYPE ${DEFAULT_VALUE_CMAKE_PLUGIN_LINKING_TYPE})
-set(EP_bcg729_DEPENDENCIES EP_ms2)
+	linphone_builder_apply_flags()
+	linphone_builder_set_ep_directories(package)
+	linphone_builder_expand_external_project_vars()
+	ExternalProject_Add(TARGET_linphone_package
+		DEPENDS TARGET_linphone_builder
+		TMP_DIR ${ep_tmp}
+		BINARY_DIR ${ep_build}
+		SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/package"
+		DOWNLOAD_COMMAND ""
+		CMAKE_GENERATOR ${CMAKE_GENERATOR}
+		CMAKE_ARGS ${LINPHONE_BUILDER_EP_ARGS} -DLINPHONE_OUTPUT_DIR=${CMAKE_INSTALL_PREFIX} -DLINPHONE_SOURCE_DIR=${EP_linphone_SOURCE_DIR} ${ENABLE_VARIABLES} -DRASPBERRY_VERSION=${RASPBERRY_VERSION}
+	)
+endif()

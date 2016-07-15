@@ -113,7 +113,11 @@ else()
 			else()
 				set(EP_vpx_TARGET "x86-darwin10-gcc")
 			endif()
-			set(EP_vpx_BUILD_IN_SOURCE 1) # Build in source otherwise there are some compilation errors
+		endif()
+		if(CMAKE_GENERATOR STREQUAL "Xcode")
+			# It appears that the build occurs in the cmake directory instead of the Build/vpx one with Xcode, so these flags are needed for include files to be found...
+			set(EP_vpx_EXTRA_CFLAGS "${EP_vpx_EXTRA_CFLAGS} -I${LINPHONE_BUILDER_WORK_DIR}/Build/vpx")
+			set(EP_vpx_EXTRA_ASFLAGS "${EP_vpx_EXTRA_ASFLAGS} -I${LINPHONE_BUILDER_WORK_DIR}/Build/vpx")
 		endif()
 		set(EP_vpx_LINKING_TYPE "--enable-static" "--disable-shared" "--enable-pic")
 	elseif(ANDROID)
@@ -123,16 +127,9 @@ else()
 			set(EP_vpx_TARGET "armv7-android-gcc")
 		else()
 			set(EP_vpx_TARGET "x86-android-gcc")
-			set(EP_vpx_EXTRA_ASFLAGS "-D__ANDROID__")
 		endif()
-		if(CMAKE_C_COMPILER_TARGET) # When building with clang
-			set(EP_vpx_EXTRA_CFLAGS "${EP_vpx_EXTRA_CFLAGS} --target=${CMAKE_C_COMPILER_TARGET}")
-			set(EP_vpx_EXTRA_LDFLAGS "${EP_vpx_EXTRA_LDFLAGS} --target=${CMAKE_C_COMPILER_TARGET} -L${GCC_LIBRARY_PATH}")
-		endif()
-		set(EP_vpx_EXTRA_CFLAGS "${EP_vpx_EXTRA_CFLAGS} --sysroot=${CMAKE_SYSROOT}")
-		set(EP_vpx_EXTRA_LDFLAGS "${EP_vpx_EXTRA_LDFLAGS} --sysroot=${CMAKE_SYSROOT}")
 		list(APPEND EP_vpx_CONFIGURE_OPTIONS
-			"--sdk-path=${ANDROID_NDK_PATH}"
+			"--sdk-path=${ANDROID_NDK_PATH}/"
 			"--enable-pic"
 		)
 		set(EP_vpx_LINKING_TYPE "--enable-static" "--disable-shared" "--enable-pic")
@@ -144,7 +141,6 @@ else()
 			"--force-target=armv7-qnx-gcc"
 			"--disable-runtime-cpu-detect"
 		)
-		#set(EP_vpx_BUILD_IN_SOURCE 1)
 	else()
 		if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 			set(EP_vpx_TARGET "x86_64-linux-gcc")

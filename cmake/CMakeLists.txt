@@ -436,6 +436,8 @@ macro(linphone_builder_create_autogen_command PROJNAME)
 			endforeach()
 		endif()
 		set(ep_autogen_command "\"${ep_source}/autogen.sh\" ${ep_autogen_options}")
+	elseif(EP_${PROJNAME}_USE_AUTORECONF)
+		set(ep_autogen_command "autoreconf -vfi ${ep_source}")
 	else()
 		set(ep_autogen_command "")
 	endif()
@@ -572,8 +574,6 @@ macro(linphone_builder_add_external_project PROJNAME)
 			configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/mingw_configure.bat.cmake ${CMAKE_CURRENT_BINARY_DIR}/EP_${PROJNAME}_configure.bat)
 			configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/mingw_build.bat.cmake ${CMAKE_CURRENT_BINARY_DIR}/EP_${PROJNAME}_build.bat)
 			configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/mingw_install.bat.cmake ${CMAKE_CURRENT_BINARY_DIR}/EP_${PROJNAME}_install.bat)
-			# Build in source with MinGW as build out-of-source does not work
-			set(ep_build "${ep_source}")
 			if(ep_autogen_command)
 				set(ep_autogen_redirect_to_file ${ep_redirect_to_file})
 			endif()
@@ -701,7 +701,7 @@ macro(linphone_builder_add_external_project PROJNAME)
 
 	if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/builders/${PROJNAME}/postinstall.cmake)
 		ExternalProject_Add_Step(EP_${PROJNAME} postinstall
-			COMMAND ${CMAKE_COMMAND} -DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE} -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR} -DINSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -P ${CMAKE_CURRENT_SOURCE_DIR}/builders/${PROJNAME}/postinstall.cmake
+			COMMAND ${CMAKE_COMMAND} -DTOOLCHAIN_RANLIB=${TOOLCHAIN_RANLIB} -DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE} -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR} -DINSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -P ${CMAKE_CURRENT_SOURCE_DIR}/builders/${PROJNAME}/postinstall.cmake
 			COMMENT "Performing post-installation for 'EP_${PROJNAME}'"
 			DEPENDEES install
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -884,4 +884,18 @@ macro(linphone_builder_add_dummy_libraries_generation)
 			CMAKE_ARGS ${LINPHONE_BUILDER_EP_ARGS} -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -DLINPHONE_BUILDER_DUMMY_LIBRARIES=${LINPHONE_BUILDER_DUMMY_LIBRARIES}
 		)
 	endif()
+endmacro()
+
+macro(linphone_builder_add_cmake_option BUILDER_NAME OPTION)
+	string(REGEX MATCH "^-D(.+)=(.*)$" _match "${OPTION}")
+	if(_match)
+		set(_varname ${CMAKE_MATCH_1})
+		foreach(_option ${EP_${BUILDER_NAME}_CMAKE_OPTIONS})
+			string(REGEX MATCH "^-D${_varname}=(.*)$" _match2 "${_option}")
+			if(_match2)
+				list(REMOVE_ITEM EP_${BUILDER_NAME}_CMAKE_OPTIONS ${_option})
+			endif()
+		endforeach()
+	endif()
+	list(APPEND EP_${BUILDER_NAME}_CMAKE_OPTIONS ${OPTION})
 endmacro()
